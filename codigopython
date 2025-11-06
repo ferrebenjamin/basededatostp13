@@ -1,0 +1,146 @@
+!pip install mysql-connector-python
+import mysql.connector
+from datetime import datetime
+
+def conectar():
+    return mysql.connector.connect(
+        host="b3pcd7kegi108u9kjiyu-mysql.services.clever-cloud.com",   
+        user="u4gr6q902jzmcyci",            
+        password="2SpAXSZ8IwiSoBQk0QTP",        
+        database="b3pcd7kegi108u9kjiyu"         
+    )
+
+def listar_libros():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT * FROM libros")
+    for l in cur.fetchall():
+        print(l)
+    con.close()
+
+def agregar_libro():
+    titulo = input("Título: ")
+    autor = input("Autor: ")
+    isbn = input("ISBN: ")
+    categoria = input("Categoría: ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("INSERT INTO libros (titulo, autor, isbn, categoria) VALUES (%s, %s, %s, %s)", (titulo, autor, isbn, categoria))
+    con.commit()
+    con.close()
+    print("Libro agregado.")
+
+def actualizar_libro():
+    id_libro = input("ID del libro a actualizar: ")
+    nuevo_estado = input("Nuevo estado (Disponible/Prestado): ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("UPDATE libros SET estado=%s WHERE id=%s", (nuevo_estado, id_libro))
+    con.commit()
+    con.close()
+    print("Estado actualizado.")
+
+def eliminar_libro():
+    id_libro = input("ID del libro a eliminar: ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("DELETE FROM libros WHERE id=%s", (id_libro,))
+    con.commit()
+    con.close()
+    print("Libro eliminado.")
+
+def listar_usuarios():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT * FROM usuarios")
+    for u in cur.fetchall():
+        print(u)
+    con.close()
+
+def agregar_usuario():
+    nombre = input("Nombre: ")
+    curso = input("Curso: ")
+    rol = input("Rol (Bibliotecario/Docente/Estudiante): ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("INSERT INTO usuarios (nombre, curso, rol) VALUES (%s, %s, %s)", (nombre, curso, rol))
+    con.commit()
+    con.close()
+    print("Usuario agregado.")
+
+def registrar_prestamo():
+    id_usuario = input("ID Usuario: ")
+    id_libro = input("ID Libro: ")
+    fecha_inicio = datetime.now().strftime("%Y-%m-%d")
+    fecha_fin = input("Fecha de devolución (YYYY-MM-DD): ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT estado FROM libros WHERE id=%s", (id_libro,))
+    res = cur.fetchone()
+    if res and res[0] == 'Prestado':
+        print("El libro ya está prestado.")
+    else:
+        cur.execute("INSERT INTO prestamos (id_usuario, id_libro, fecha_inicio, fecha_fin) VALUES (%s, %s, %s, %s)", (id_usuario, id_libro, fecha_inicio, fecha_fin))
+        cur.execute("UPDATE libros SET estado='Prestado' WHERE id=%s", (id_libro,))
+        con.commit()
+        print("Préstamo registrado.")
+    con.close()
+
+def registrar_devolucion():
+    id_prestamo = input("ID del préstamo a devolver: ")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("UPDATE prestamos SET estado='Devuelto' WHERE id=%s", (id_prestamo,))
+    cur.execute("SELECT id_libro FROM prestamos WHERE id=%s", (id_prestamo,))
+    libro = cur.fetchone()
+    if libro:
+        cur.execute("UPDATE libros SET estado='Disponible' WHERE id=%s", (libro[0],))
+    con.commit()
+    con.close()
+    print("Devolución registrada.")
+
+def listar_prestamos():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("""
+    SELECT p.id, u.nombre, l.titulo, p.fecha_inicio, p.fecha_fin, p.estado
+    FROM prestamos p
+    JOIN usuarios u ON p.id_usuario = u.id
+    JOIN libros l ON p.id_libro = l.id
+    """)
+    for p in cur.fetchall():
+        print(p)
+    con.close()
+
+def menu():
+    while True:
+        print("""
+===== SISTEMA DE GESTIÓN DE BIBLIOTECA ESCOLAR =====
+1. Listar libros
+2. Agregar libro
+3. Actualizar estado de libro
+4. Eliminar libro
+5. Listar usuarios
+6. Agregar usuario
+7. Registrar préstamo
+8. Registrar devolución
+9. Listar préstamos
+0. Salir
+""")
+        op = input("Seleccione una opción: ")
+        if op == "1": listar_libros()
+        elif op == "2": agregar_libro()
+        elif op == "3": actualizar_libro()
+        elif op == "4": eliminar_libro()
+        elif op == "5": listar_usuarios()
+        elif op == "6": agregar_usuario()
+        elif op == "7": registrar_prestamo()
+        elif op == "8": registrar_devolucion()
+        elif op == "9": listar_prestamos()
+        elif op == "0":
+            print("Saliendo del sistema...")
+            break
+        else:
+            print("Opción no válida.")
+
+menu()

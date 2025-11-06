@@ -1,0 +1,41 @@
+USE b3pcd7kegi108u9kjiyu;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    curso VARCHAR(10),
+    rol ENUM('Bibliotecario','Docente','Estudiante') NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS libros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(100) NOT NULL,
+    autor VARCHAR(100) NOT NULL,
+    isbn VARCHAR(20) UNIQUE NOT NULL,
+    categoria VARCHAR(50),
+    estado ENUM('Disponible','Prestado') DEFAULT 'Disponible'
+);
+
+CREATE TABLE IF NOT EXISTS prestamos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_libro INT NOT NULL,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    estado ENUM('Activo','Devuelto') DEFAULT 'Activo',
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
+    FOREIGN KEY (id_libro) REFERENCES libros(id)
+);
+
+INSERT INTO usuarios (nombre, curso, rol) VALUES
+('Thomas Alvaro', '6E', 'Estudiante'),
+('Thiago Ledesma', '6E', 'Bibliotecario'),
+('Jeremias Parejo', '5E', 'Docente');
+
+INSERT INTO libros (titulo, autor, isbn, categoria, estado) VALUES
+('Cien años de soledad', 'ezequiel quispe', '9780307474728', 'Novela', 'Disponible'),
+('El Principito', 'Maximiliano Romero', '9780156012195', 'Infantil', 'Disponible'),
+('Rayuela', 'Hector Chacon', '9788437600865', 'Ficción', 'Prestado');
+
+INSERT INTO prestamos (id_usuario, id_libro, fecha_inicio, fecha_fin, estado) VALUES
+(1, 3, '2025-09-01', '2025-09-15', 'Activo');
